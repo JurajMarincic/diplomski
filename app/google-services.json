@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "342156057726",
+    "project_id": "jurajdiplomski",
+    "storage_bucket": "jurajdiplomski.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:342156057726:android:ada9e738f0ee0de6f18c2f",
+        "android_client_info": {
+          "package_name": "com.example.juraj_diplomski"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD_qH--z5IDGGr3ZC5EK4XT1kPraF_gai8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
