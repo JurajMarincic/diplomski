@@ -108,7 +108,6 @@ class WalletManager private constructor() {
                 Log.d("TicketDApp", "User public key: $userPublicKey")
                 Log.d("TicketDApp", "Transaction authorization result: $authResult")
 
-                // Update seeds to include "ticket" and the user's public key
                 val seeds = listOf("ticket".encodeToByteArray())
 
                 val result = ProgramDerivedAddress.find(seeds, programId)
