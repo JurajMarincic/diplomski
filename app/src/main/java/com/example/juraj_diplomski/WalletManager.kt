@@ -3,7 +3,6 @@ package com.example.juraj_diplomski
 import android.net.Uri
 import android.util.Log
 import androidx.fragment.app.FragmentActivity
-import androidx.lifecycle.MutableLiveData
 import com.funkatronics.encoders.Base58
 import com.funkatronics.kborsh.Borsh
 import com.solana.mobilewalletadapter.clientlib.ActivityResultSender
@@ -38,8 +37,6 @@ class WalletManager private constructor() {
     }
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
-
-    private val _userPublicKey = MutableLiveData<String?>(null)
 
     val solanaUri = Uri.parse("https://example.org")
     val iconUri = Uri.parse("res/drawable/transfer2.png")
@@ -78,9 +75,6 @@ class WalletManager private constructor() {
                     if (publicKey != null) {
                         val publicKeyString = Base58.encodeToString(publicKey)
                         Log.d("TAG", "Wallet connected successfully. Public key: $publicKeyString")
-
-                        _userPublicKey.value = publicKeyString
-
                         Log.d("TAG", "Wallet connection completed")
 
                     }
