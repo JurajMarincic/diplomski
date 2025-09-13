@@ -48,7 +48,6 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.auth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.solana.mobilewalletadapter.clientlib.*
-import com.solana.publickey.SolanaPublicKey
 import kotlinx.coroutines.launch
 
 class MainActivity : FragmentActivity() {
@@ -86,7 +85,7 @@ class MainActivity : FragmentActivity() {
                     )
                 }
                 composable("ScreenMyTickets") {
-                    MyTicketsScreen(navController = navController, ticketManager = ticketManager)
+                    MyTicketsScreen(navController = navController, ticketManager = ticketManager, walletManager = manager)
                 }
                 composable("ScreenRemoveTicket") {
                     RemoveTicketScreen(navController = navController, ticketManager = ticketManager)
@@ -528,10 +527,7 @@ fun TicketScreen(
                 Button(
                     onClick = {
                               walletManager.sendTransaction(tickets[index])
-                        //coroutineScope.launch {
-                        //    onBuyTicket(tickets[index])
-                            //ticketManager.buyTicket(tickets[index])
-                        //}
+                              ticketManager.buyTicket(tickets[index])
                     },
                     modifier = Modifier
                         .padding(start = 16.dp)
@@ -557,7 +553,7 @@ fun TicketScreen(
 }
 
 @Composable
-fun MyTicketsScreen(navController: NavController, ticketManager: TicketManager) {
+fun MyTicketsScreen(navController: NavController, ticketManager: TicketManager,walletManager: WalletManager) {
     var purchasedTickets by remember { mutableStateOf<List<Ticket>>(emptyList()) }
     val currentUser = FirebaseAuth.getInstance().currentUser
     val userId = currentUser?.uid
@@ -569,6 +565,7 @@ fun MyTicketsScreen(navController: NavController, ticketManager: TicketManager) 
             }
         }
     }
+
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
@@ -611,6 +608,15 @@ fun MyTicketsScreen(navController: NavController, ticketManager: TicketManager) 
                         color = Color.White,
                         fontSize = 18.sp
                     )
+                }
+
+                Button(
+                    onClick = {
+                              walletManager.useTicket(purchasedTickets[index])
+                    },
+                    modifier = Modifier.padding(start = 16.dp)
+                ) {
+                    Text("Use the ticket")
                 }
             }
             Divider(color = Color.Black, thickness = 2.dp)
@@ -675,7 +681,7 @@ fun AddTicketScreen(navController: NavController, ticketManager: TicketManager) 
 
         Button(
             onClick = {
-                val ticketPrice = price.text.toFloat()
+                val ticketPrice = price.text.toDouble()
 
                 coroutineScope.launch {
                     val currentCounter = ticketManager.getCounter()
@@ -734,83 +740,5 @@ fun RemoveTicketScreen(navController: NavController, ticketManager: TicketManage
             Text("Remove the ticket")
         }
     }
-}
-
-suspend fun onBuyTicket(ticket: Ticket) {
-
-    Log.d("TicketDApp", "Starting to buy ticket: ${ticket.id}")
-    val programId = SolanaPublicKey.from("F75bTjnaqScc9VZz6p5dKxFyxdBNQ48g7UURVZCwTSyH")
-    Log.d("TicketDApp", "ProgramID: $programId")
-
-//    walletAdapter.transact(sender) { authResult ->
-//
-//        Log.d("TicketDApp", "Transact callback entered")
-//        val userPublicKey = SolanaPublicKey(authResult.accounts.first().publicKey)
-//        Log.d("TicketDApp", "User public key: $userPublicKey")
-//        Log.d("TicketDApp", "Transaction authorization result: $authResult")
-//
-//
-//        // Update seeds to include "ticket" and the user's public key
-//        val seeds = listOf("ticket".encodeToByteArray())
-//
-//        val result = ProgramDerivedAddress.find(seeds, programId)
-//        val accountPDA = result.getOrNull() ?: run {
-//            Log.e("TicketDApp", "Failed to find Program Derived Address")
-//            return@transact
-//        }
-//        Log.d("TicketDApp", "Account PDA found: $accountPDA")
-//
-//        val rpcClient = SolanaRpcClient("https://api.devnet.solana.com", KtorNetworkDriver())
-//        Log.d("TicketDApp", "RPC Client initialized")
-//
-//        // Fetch latest blockhash
-//        val blockhashResponse = rpcClient.getLatestBlockhash()
-//        val latestBlockhash = blockhashResponse.result?.blockhash ?: run {
-//            Log.e("TicketDApp", "Failed to get latest blockhash")
-//            return@transact
-//        }
-//        Log.d("TicketDApp", "Latest blockhash retrieved: $latestBlockhash")
-//
-//        // Encode the instruction data
-//        val encodedInstructionData = Borsh.encodeToByteArray(
-//            AnchorInstructionSerializer("create_ticket"),
-//            Args_ticket(
-//                ticket.id,
-//                ticket.name,
-//                ticket.departureTime,
-//                ticket.arrivalTime,
-//                ticket.price
-//            )
-//        )
-//        Log.d("TicketDApp", "Encoded instruction data: ${encodedInstructionData.contentToString()}")
-//
-//        // Create ticket instruction
-//        val ticketInstruction = TransactionInstruction(
-//            programId,
-//            listOf(
-//                AccountMeta(accountPDA, false, true), // PDA is writable but not signer
-//                AccountMeta(userPublicKey, true, true), // User is signer and writable
-//                AccountMeta(SolanaPublicKey.from("HJ6BiGSGJM6dwCypk2uMPkgnHm82JC32YPuy4yhv93qN"), false, true), // fee collector (writable)
-//                AccountMeta(SystemProgram.PROGRAM_ID, false, false) // system program
-//            ),
-//            encodedInstructionData
-//        )
-//        Log.d("TicketDApp", "Ticket instruction created: $ticketInstruction")
-//
-//
-//        // Build transaction message
-//        val transactionMessage = Message.Builder()
-//            .addInstruction(ticketInstruction)
-//            .setRecentBlockhash(latestBlockhash)
-//            .build()
-//
-//        // Create and sign the transaction
-//        val transaction = Transaction(transactionMessage)
-//        Log.d("TicketDApp", "Transaction created: $transaction")
-//
-//        // Sign and send the transaction
-//        signAndSendTransactions(arrayOf(transaction.serialize()))
-//        Log.d("TicketDApp", "Transaction sent for signing and sending")
-//    }
 }
 

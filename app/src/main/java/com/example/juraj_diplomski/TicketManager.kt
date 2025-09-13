@@ -3,6 +3,7 @@ package com.example.juraj_diplomski
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.tasks.await
+import kotlin.math.roundToInt
 
 class TicketManager {
 
@@ -73,7 +74,8 @@ class TicketManager {
                         name = data["name"] as? String ?: "",
                         departureTime = data["departureTime"] as? String ?: "",
                         arrivalTime = data["arrivalTime"] as? String ?: "",
-                        price = (data["price"] as? Number)?.toFloat() ?: 0f
+                        price = (((data["price"] as? Number)?.toDouble()
+                            ?: 0.0) * 10).roundToInt() / 10.0
                     )
                 } else {
                     null
@@ -93,7 +95,7 @@ class TicketManager {
                         name = data["name"] as? String ?: "",
                         departureTime = data["departureTime"] as? String ?: "",
                         arrivalTime = data["arrivalTime"] as? String ?: "",
-                        price = (data["price"] as? Number)?.toFloat() ?: 0f
+                        price = (data["price"] as? Number)?.toDouble() ?: 0.0
                     )
                 } else {
                     null
@@ -127,5 +129,5 @@ data class Ticket(
     val name: String,
     val departureTime: String,
     val arrivalTime: String,
-    val price: Float
+    val price: Double
 )

@@ -99,7 +99,7 @@ class WalletManager private constructor() {
         scope.launch {
             val sender = activityResultSender
             val adapter = walletAdapter
-            val programId = SolanaPublicKey.from("F75bTjnaqScc9VZz6p5dKxFyxdBNQ48g7UURVZCwTSyH")
+            val programId = SolanaPublicKey.from("89rGTLgdRWEvpCd9qxAPKGSF284wsxJmyfrBcTQCER3P")
 
             adapter?.transact(sender!!) { authResult ->
 
@@ -108,11 +108,16 @@ class WalletManager private constructor() {
                 Log.d("TicketDApp", "User public key: $userPublicKey")
                 Log.d("TicketDApp", "Transaction authorization result: $authResult")
 
-                val seeds = listOf("ticket".encodeToByteArray())
+                val seeds = listOf(
+                    "ticket".encodeToByteArray(),
+                    userPublicKey.bytes,          // already 32 bytes
+                    ticket.id.encodeToByteArray()
+                )
 
                 val result = ProgramDerivedAddress.find(seeds, programId)
                 val accountPDA = result.getOrNull()
                 Log.d("TicketDApp", "Account PDA found: $accountPDA")
+                println("Account PDA found: $accountPDA")
 
                 val encodedInstructionData = Borsh.encodeToByteArray(
                     AnchorInstructionSerializer("create_ticket"),
@@ -144,6 +149,75 @@ class WalletManager private constructor() {
                 )
                 Log.d("TicketDApp", "Ticket instruction created: $ticketInstruction")
 
+                val rpcClient =
+                    SolanaRpcClient("https://api.devnet.solana.com", KtorNetworkDriver())
+                Log.d("TicketDApp", "RPC Client initialized")
+
+                // Fetch latest blockhash
+                val blockhashResponse = rpcClient.getLatestBlockhash()
+                Log.d("TicketDApp", "Latest blockhash retrieved: ${blockhashResponse.result!!.blockhash}")
+
+                // Build transaction message
+                val transactionMessage = Message.Builder()
+                    .addInstruction(ticketInstruction)
+                    .setRecentBlockhash(blockhashResponse.result!!.blockhash)
+                    .build()
+
+                // Create and sign the transaction
+                val unsignedTransaction = Transaction(transactionMessage)
+                Log.d("TicketDApp", "Transaction created: $unsignedTransaction")
+
+                // Sign and send the transaction
+                signAndSendTransactions(arrayOf(unsignedTransaction.serialize()))
+                Log.d("TicketDApp", "Transaction sent for signing and sending")
+            }
+        }
+    }
+
+    fun useTicket(ticket: Ticket) {
+        scope.launch {
+            val sender = activityResultSender
+            val adapter = walletAdapter
+            val programId = SolanaPublicKey.from("89rGTLgdRWEvpCd9qxAPKGSF284wsxJmyfrBcTQCER3P")
+
+            adapter?.transact(sender!!) { authResult ->
+
+                Log.d("TicketDApp", "Transact callback entered")
+                val userPublicKey = SolanaPublicKey(authResult.accounts.first().publicKey)
+                Log.d("TicketDApp", "User public key: $userPublicKey")
+                Log.d("TicketDApp", "Transaction authorization result: $authResult")
+
+                val seeds = listOf(
+                    "ticket".encodeToByteArray(),
+                    userPublicKey.bytes,          // already 32 bytes
+                    ticket.id.encodeToByteArray()
+                )
+
+                val result = ProgramDerivedAddress.find(seeds, programId)
+                val accountPDA = result.getOrNull()
+                Log.d("TicketDApp", "Account PDA found: $accountPDA")
+                println("Account PDA found: $accountPDA")
+
+                val encodedInstructionData = Borsh.encodeToByteArray(
+                    AnchorInstructionSerializer("close_ticket"),
+                    Args_useTicket(
+                        ticket.id
+                    )
+                )
+
+                Log.d("TicketDApp", "Encoded instruction data: ${encodedInstructionData.contentToString()}")
+
+                // Create ticket instruction
+                val ticketInstruction = TransactionInstruction(
+                    programId,
+                    listOf(
+                        AccountMeta(accountPDA!!, false, true), // PDA is writable but not signer
+                        AccountMeta(userPublicKey, true, true), // User is signer and writable
+                    ),
+                    encodedInstructionData
+                )
+                Log.d("TicketDApp", "Ticket instruction created: $ticketInstruction")
+
 
                 val rpcClient =
                     SolanaRpcClient("https://api.devnet.solana.com", KtorNetworkDriver())
@@ -169,13 +243,19 @@ class WalletManager private constructor() {
             }
         }
     }
+
     @Serializable
     class Args_ticket(
         val id: String,
         val name: String,
         val departureTime: String,
         val arrivalTime: String,
-        val price: Float
+        val price: Double
+    )
+
+    @Serializable
+    class Args_useTicket(
+        val id: String
     )
 }
 
